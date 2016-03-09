@@ -1,0 +1,21 @@
+---
+- name: configure nginx host
+  hosts: webservers
+  become: yes
+  become_method: sudo
+# 
+  tasks:
+    - name: install ngix
+      apt: name=nginx update_cache=yes cache_valid_time=3600
+#
+    - name: copy nginx config file
+      copy: src=files/nginx.conf dest=/etc/nginx/sites-available/default
+#
+    - name: enable configuration
+      file: > 
+        dest=/etc/nginx/sites-enabled/default 
+        src=/etc/nginx/sites-available/default
+        state=link
+#
+    - name: restart nginx
+      service: name=nginx state=restarted

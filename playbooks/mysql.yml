@@ -1,0 +1,81 @@
+---
+- name: Gather facts from the webservers
+  hosts:
+   - webservers
+  tasks: [ ]
+
+- name: Configure the server with MySQL 5
+  hosts: dbservers
+  become: yes
+  become_method: sudo
+  vars:
+    mysql_bind_address: 0.0.0.0
+    mysql_root_password: mysecretpassword
+    wp_db_name: wordpress
+    wp_db_user: wordpress
+    wp_db_password: '*d8dc4ce739460a4f25874db49c47634023e8eeec'
+  tasks:
+#
+    - name: install MySQL server
+      apt: name={{ item }} update_cache=yes cache_valid_time=3600 state=present
+      with_items:
+        - mysql-server
+        - python-mysqldb
+#
+    - name: start MySQL service
+      service: name=mysql state=started enabled=yes
+#
+    - name: update MySQL root password
+      mysql_user:
+        name: root
+        host: "{{ item }}"
+        password: "{{ mysql_root_password }}"
+        # encrypted: yes
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        check_implicit_admin: yes
+        priv: "*.*:ALL,GRANT"
+        state: present
+      with_items:
+        - "{{ ansible_hostname }}"
+        - 127.0.0.1
+        - ::1
+        - localhost
+      notify: restart mysql
+#
+    - name: Copy MySQL configuration file
+      template: 
+        src: templates/my.cnf.j2 
+        dest: /etc/mysql/my.cnf 
+        owner: root 
+        mode: 0600
+      notify: restart mysql
+
+    - name: create WordPress database
+      mysql_db: 
+        name: "{{ wp_db_name }}"
+        login_user: root
+        login_password: "mysecretpassword"
+        state: present
+
+    - name: create WordPress database user
+      mysql_user: 
+        name: "{{ wp_db_user }}"
+        password: "{{ wp_db_password }}"
+        encrypted: yes
+        login_user: root
+        login_password: "{{ mysql_root_password }}"
+        host: "{{ item }}"
+        priv: "{{ wp_db_name }}.*:ALL"
+        state: present
+      with_items:
+        - "{{ ansible_hostname }}"
+        - 127.0.0.1
+        - ::1
+        - localhost
+        - "{{ hostvars[groups['webservers'][0]]['ansible_eth1']['ipv4']['address'] }}"
+        # - 10.100.100.12
+
+  handlers:
+    - name: restart mysql
+      service: name=mysql state=restarted

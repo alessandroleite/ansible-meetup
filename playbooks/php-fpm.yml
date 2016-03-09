@@ -1,0 +1,20 @@
+---
+- name: Install PHP webserver
+  hosts: webservers
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: install php5-fpm
+      apt: name={{ item }} update_cache=yes cache_valid_time=3600 state=present
+      with_items:
+        - php5-fpm
+        - php5-enchant
+        - php5-mysql
+#
+    - name: copy php configuration file
+      copy: src=files/php.ini dest=/etc/php5/fpm/php.ini
+      notify: restart php5-fpm
+#
+  handlers:
+    - name: restart php5-fpm
+      service: name=php5-fpm state=restarted

@@ -1,0 +1,76 @@
+---
+- name: install python-mysqldb package
+  apt: name=python-mysqldb update_cache=yes cache_valid_time=3600 state=present
+
+- name: download WordPress {{ wp_version }}
+  get_url:
+    url: http://wordpress.org/wordpress-{{ wp_version }}.tar.gz 
+    dest: /usr/share/nginx/html/wordpress-{{ wp_version }}.tar.gz
+    sha256sum: "{{ wp_sha256sum }}"
+
+- name: extract WordPress {{ wp_version }} tarball
+  unarchive:
+    src: /usr/share/nginx/html/wordpress-{{ wp_version }}.tar.gz
+    dest: /usr/share/nginx/html
+    copy: no
+  # command: > 
+  #   chdir=/usr/share/nginx/html 
+  #   /bin/tar xvf wordpress-{{ wp_version }}.tar.gz 
+  #   creates=/usr/share/nginx/html/wordpress
+
+# - name: remove WordPress tarball
+#   # command: rm /usr/share/nginx/html/wordpress-{{ wp_version }}.tar.gz
+#   file: 
+#     path: /usr/share/nginx/html/wordpress-{{ wp_version }}.tar.gz 
+#     state: absent
+
+- name: add group "wordpress"
+  group: name=wordpress
+
+- name: add user "wordpress"
+  user: name=wordpress group=wordpress home=/usr/share/nginx/html/wordpress/
+
+# - name: fetch random salts for WordPress configuration
+#   local_action: command curl https://api.wordpress.org/secret-key/1.1/salt/
+#   register: "wp_salt"
+#   become: no
+
+- name: copy WordPress configuration file
+  template: 
+    src: wp-config.php 
+    dest: /usr/share/nginx/html/wordpress/
+
+- name: change ownership of WordPress installation
+  file: 
+    path: /usr/share/nginx/html/wordpress/
+    owner: wordpress 
+    group: wordpress 
+    state: directory 
+    recurse: yes
+
+- debug: msg="{{ wp_db_hostname }}"
+
+- name: create WordPress database
+  mysql_db: 
+    name: "{{ wp_db_name }}"
+    login_host: "{{ wp_db_hostname }}"
+    login_user: "{{ mysql_root_name }}"
+    login_password: "{{ mysql_root_password }}"
+    state: present
+
+- name: create WordPress database user
+  mysql_user: 
+    login_host: "{{ wp_db_hostname }}"
+    login_user: "{{ mysql_root_name }}"
+    login_password: "{{ mysql_root_password }}"
+    name: "{{ wp_db_user }}"
+    password: "{{ wp_db_password }}"
+    host: "{{ item }}"
+    priv: "{{ wp_db_name }}.*:ALL"
+    state: present
+  with_items:
+    - "{{ ansible_hostname }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+    - "{{ hostvars[groups['webservers'][0]]['ansible_eth1']['ipv4']['address'] }}"

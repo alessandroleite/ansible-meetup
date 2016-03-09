@@ -1,0 +1,10 @@
+---
+- name: collect the name of the user and the facts about the node
+  hosts: webservers
+  gather_facts: yes
+  tasks:
+    - name: register the output of whoami command
+      command: whoami
+      register: login_user
+    - debug: msg="Logged as user {{ login_user.stdout }} and my IP address is {{ hostvars[groups['webservers'][0]]['ansible_eth1']['ipv4']['address'] }}"
+

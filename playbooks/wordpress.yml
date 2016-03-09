@@ -1,0 +1,72 @@
+---
+- name: Gather facts from dbservers
+  hosts: 
+   - dbservers
+  tasks: [ ]
+
+- name: Install and configure WordPress
+  hosts: webservers
+  become: yes
+  become_method: sudo
+  gather_facts: yes
+
+  vars:
+    wp_version: 4.4.2
+    auto_up_disable: True
+    core_update_level: False
+    wp_db_hostname: "{{ hostvars[groups['dbservers'][0]]['ansible_eth1']['ipv4']['address'] }}"
+    wp_sha256sum: 'c8a74c0f7cfc0d19989d235759e70cebd90f42aa0513bd9bc344230b0f79e08b'
+    wp_db_name: wordpress
+    wp_db_user: wordpress
+    wp_db_password: 'wordpress_secret_password'
+
+  tasks:
+    - debug: msg="{{ hostvars[groups['dbservers'][0]]['ansible_eth1']['ipv4']['address'] }}"
+
+    - name: install python-mysqldb package
+      apt: name=python-mysqldb update_cache=yes state=present
+
+    - name: download WordPress {{ wp_version }}
+      get_url:
+        url: http://wordpress.org/wordpress-{{ wp_version }}.tar.gz 
+        dest: /usr/share/nginx/html/wordpress-{{ wp_version }}.tar.gz
+        sha256sum: "{{ wp_sha256sum }}"
+
+    - name: extract WordPress {{ wp_version }} tarball
+      command: > 
+        chdir=/usr/share/nginx/html 
+        /bin/tar xvf wordpress-{{ wp_version }}.tar.gz 
+        creates=/usr/share/nginx/html/wordpress
+
+    - name: remove WordPress tarball
+      command: rm /usr/share/nginx/html/wordpress-{{ wp_version }}.tar.gz
+
+    - name: add group "wordpress"
+      group: name=wordpress
+
+    - name: add user "wordpress"
+      user: name=wordpress group=wordpress home=/usr/share/nginx/html/wordpress/
+
+    - name: fetch random salts for WordPress configuration
+      local_action: command curl https://api.wordpress.org/secret-key/1.1/salt/
+      register: "wp_salt"
+      become: no
+
+    - name: copy WordPress configuration file
+      template: 
+        src: templates/wp-config.php 
+        dest: /usr/share/nginx/html/wordpress/
+
+    - name: change ownership of WordPress installation
+      file: 
+        path: /usr/share/nginx/html/wordpress/
+        owner: wordpress 
+        group: wordpress 
+        state: directory 
+        recurse: yes
+
+    - name: restart php5-fpm service
+      service: 
+        name: php5-fpm 
+        state: restarted 
+        enabled: yes

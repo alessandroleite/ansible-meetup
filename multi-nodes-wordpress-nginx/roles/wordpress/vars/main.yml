@@ -1,0 +1,11 @@
+---
+wp_db_host: "{{ hostvars[groups['dbservers'][0]]['ansible_eth1']['ipv4']['address'] }}"
+wp_salt:
+  - define('AUTH_KEY',         'N@m`v@X/]+w|b+t|kZ BhtBYP)r8Iq:|NOMg/f0T0T?5`@WW{R>2;r+QFW Ay,Gg');
+  - define('SECURE_AUTH_KEY',  'D{^M[8JS5e-4cZ.TUiG-wzp=)b@JNH;6=AFOqZTA/FIa(=w>%BLX@EU7G.CdF*5e');
+  - define('LOGGED_IN_KEY',    'Q+N8p*E:&#2>-h=.E_n7{,QcRpF9 [%R-v4_wc=d#itm81*9Z>E@0%MGLsGzD{>T');
+  - define('NONCE_KEY',        ']PzZw+Fy+OI^BlyyPc*1`u*S1SFuZZ^`%kX0o+Xfd4Xcpb!!Lk4sa%4U</@R3S8I');
+  - define('AUTH_SALT',        '=fP04Qvx%tI(^qGN?B;@&R?sbQyvGk_#+oL.qow$|a6`w1yJ#cgp3S04dX}6iO^l');
+  - define('SECURE_AUTH_SALT', '`m _+R[mdPT+d`:^kYyUX0E~3U+L#Ggg%I81l0?yNjmc{c0OXY--q 2SQg9>OiLy');
+  - define('LOGGED_IN_SALT',   'Bqy|1HG1UE Ir]z 0hq1)HK}tbdT%5%Ph`mxd;LocB?X-|p-s5$52dhu9`Rm}G3 ');
+  - define('NONCE_SALT',       '{yPP-kLt(vK`N<o1/ANzMk-sb=MT(&R/bRmW?+b_U,B2XQt:v+pxul&;6+$W#4/W');

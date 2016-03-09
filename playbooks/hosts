@@ -1,0 +1,6 @@
+[dbservers]
+mysqlserver ansible_ssh_host=10.100.100.11 ansible_ssh_port=22
+
+[webservers]
+nginx ansible_ssh_host=10.100.100.12 ansible_ssh_port=22
+

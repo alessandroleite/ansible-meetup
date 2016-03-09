@@ -1,0 +1,10 @@
+---
+- name: Gather facts from dbservers
+  hosts: all
+  tasks: [ ]
+
+- name: Install WordPress, MySQL, Nginx, and PHP5-FPM across different nodes
+  hosts:
+    - all
+- include: dbservers.yml
+- include: webservers.yml

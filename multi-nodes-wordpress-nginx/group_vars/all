@@ -1,0 +1,21 @@
+---
+#
+cert_file: /etc/nginx/ssl/nginx.crt
+key_file: /etc/nginx/ssl/nginx.key
+nginx_conf_file: /etc/nginx/sites-available/default
+server_name: localhost
+#
+mysql_bind_address: 0.0.0.0
+mysql_root_name: root
+mysql_root_password: mysecretpassword
+
+#
+wp_version: 4.4.2
+wp_sha256sum: 'c8a74c0f7cfc0d19989d235759e70cebd90f42aa0513bd9bc344230b0f79e08b'
+wp_db_hostname: "{{ hostvars[groups['dbservers'][0]]['ansible_eth1']['ipv4']['address'] }}"
+wp_db_name: wordpress
+wp_db_user: wordpress
+wp_db_password: 'wordpress_secret_password'
+#
+auto_up_disable: True
+core_update_level: False

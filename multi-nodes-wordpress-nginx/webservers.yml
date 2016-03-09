@@ -1,0 +1,10 @@
+---
+- hosts: 
+  - webservers
+  become: yes
+  become_method: sudo
+  roles:
+    - common
+    - nginx
+    - php5-fpm
+    - wordpress
